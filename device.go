@@ -10,12 +10,19 @@ import (
 	"strconv"
 )
 
+/* 设备管理器
+需要先调用NewManager初始化管理器，使用管理器生成设备
+设备id和用户token需要从平台获取
+*/
 type DeviceManager struct {
 	token     string // 用户token
 	MasterUrl string // master服务器地址
 	UserUrl   string // user服务器地址
 }
 
+/* 单个设备
+用以上传，读取数据等操作
+*/
 type Device struct {
 	ID       int    // 设备ID
 	token    string //用户token
