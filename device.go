@@ -1,7 +1,9 @@
 package distiot
 
 import (
+	"bytes"
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -16,6 +18,7 @@ type DeviceManager struct {
 
 type Device struct {
 	ID       int    // 设备ID
+	token    string //用户token
 	NodeAddr string // 节点服务器地址，只包含IP，不包含头部
 	NodePort int    // 节点服务器端口
 }
@@ -36,6 +39,7 @@ func NewManager(token string) *DeviceManager {
 func (m *DeviceManager) NewDevice(did int) (*Device, error) {
 	var device Device
 	device.ID = did
+	device.token = m.token
 	addr, port, err := m.getNode(did)
 	if err != nil {
 		return nil, err
@@ -78,4 +82,40 @@ type nodeData struct {
 	ID   int    `json:"id"`
 	Addr string `json:"addr"`
 	Port int    `json:"port"`
+}
+
+/* Http上传数据 一次只能上传一条数据，非异步请求
+请确保正确初始化后再上传
+*/
+func (d *Device) UploadDataHttp(data interface{}) error {
+	//使用高效的拼接方式，先初始化请求地址
+	var strs bytes.Buffer
+	strs.WriteString("http://")
+	strs.WriteString(d.NodeAddr)
+	strs.WriteString(":")
+	strs.WriteString(strconv.Itoa(d.NodePort))
+	strs.WriteString("/node")
+
+	//设置GET请求参数
+	params := url.Values{}
+	params.Set("token", d.token)
+	params.Set("did", strconv.Itoa(d.ID))
+	params.Set("data", data.(string))
+
+	Url, err := url.Parse(strs.String())
+	if err != nil {
+		return err
+	}
+	Url.RawQuery = params.Encode()
+	res, err := http.Get(Url.String())
+	if err != nil {
+		return err
+	}
+	defer res.Body.Close()
+	if res.Status != "200 OK" {
+		//解析node信息
+		body, _ := ioutil.ReadAll(res.Body)
+		return errors.New(string(body))
+	}
+	return nil
 }
