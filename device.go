@@ -1,4 +1,4 @@
-package distiot
+package main
 
 import (
 	"bytes"
@@ -65,7 +65,7 @@ func (m *DeviceManager) getNode(did int) (string, int, error) {
 	}
 	params := url.Values{}
 	params.Set("token", m.token)
-	params.Set("did", strconv.Itoa(did))
+	params.Set("id", strconv.Itoa(did))
 	Url.RawQuery = params.Encode()
 	res, err := http.Get(Url.String())
 	if err != nil {
@@ -80,7 +80,8 @@ func (m *DeviceManager) getNode(did int) (string, int, error) {
 	var node nodeData
 	err = json.Unmarshal(body, &node)
 	if err != nil {
-		return "", 0, err
+		err2 := errors.New(string(body))
+		return "", 0, err2
 	}
 	return node.Addr, node.Port, nil
 }
@@ -91,23 +92,23 @@ type nodeData struct {
 	Port int    `json:"port"`
 }
 
-/* Http上传数据 一次只能上传一条数据，非异步请求
+/* Http上传数据 一次只能上传一条数据，非异步请求，传入字符串格式的数据
 请确保正确初始化后再上传
 */
-func (d *Device) UploadDataHttp(data interface{}) error {
+func (d *Device) UploadDataHttp(data string) error {
 	//使用高效的拼接方式，先初始化请求地址
 	var strs bytes.Buffer
 	strs.WriteString("http://")
 	strs.WriteString(d.NodeAddr)
 	strs.WriteString(":")
 	strs.WriteString(strconv.Itoa(d.NodePort))
-	strs.WriteString("/node")
+	strs.WriteString("/node/dataWriteSingle")
 
 	//设置GET请求参数
 	params := url.Values{}
 	params.Set("token", d.token)
 	params.Set("did", strconv.Itoa(d.ID))
-	params.Set("data", data.(string))
+	params.Set("data", data)
 
 	Url, err := url.Parse(strs.String())
 	if err != nil {
