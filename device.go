@@ -1,4 +1,4 @@
-package main
+package distiot
 
 import (
 	"bytes"
@@ -33,8 +33,8 @@ type Device struct {
 //创建一个新的设备管理器，传入用户token。管理器可以管理多个device
 func NewManager(token string) *DeviceManager {
 	//未指定URL，则为默认的URL
-	masterUrl := "http://master.distiot.ri-co.cn"
-	userUrl := "http://user.distiot.ri-co.cn"
+	masterUrl := "http://master.distiot.ri-co.cn/master"
+	userUrl := "http://user.distiot.ri-co.cn/user"
 	return &DeviceManager{
 		token:     token,
 		MasterUrl: masterUrl,
